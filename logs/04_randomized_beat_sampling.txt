@@ -1,0 +1,77 @@
+Using device: cuda
+============================================================
+ECG → VCG Training
+============================================================
+
+Loading + preprocessing up to 549 records from ./data/ptb/PTB diagnostic ecg database csv files (beat length=raw/native, max 15 beats/record)...
+Extracted 8235 beats in 78.5s
+ECG shape: (8235, 12, 1000)
+VCG shape: (8235, 3, 1000)
+
+Train: 6600 beats | Val: 1635 beats
+Train patients: 435 | Val patients: 108
+
+────────────────────────────────────────────────────────────
+KORS REGRESSION BASELINE
+────────────────────────────────────────────────────────────
+  MSE: 1.354477
+  RMSE: 1.163820
+  MAE: 0.622021
+  R²: 0.0561
+  Correlation: 0.4479
+  Loop area error: 0.9590
+  Max deviation: 2.8490
+
+────────────────────────────────────────────────────────────
+TRAINING LSTM
+────────────────────────────────────────────────────────────
+Parameters: 661,635
+Epoch   0/50 | Train: 0.862137 | Val: 1.190096 | Best: 1.190096 (ep 0) | LR: 9.99e-05
+Epoch  10/50 | Train: 0.431635 | Val: 1.377712 | Best: 1.190096 (ep 0) | LR: 8.86e-05
+Early stopping at epoch 15 (no improvement for 15 epochs)
+
+Training complete in 145.9s
+Best val loss: 1.190096 at epoch 0
+Restored model weights from best epoch (0)
+
+  LSTM Results:
+  MSE: 1.206540
+  RMSE: 1.098426
+  MAE: 0.558129
+  R²: 0.2123
+  Correlation: 0.3784
+  Loop area error: 0.9383
+  Max deviation: 2.8447
+
+────────────────────────────────────────────────────────────
+TRAINING TRANSFORMER
+────────────────────────────────────────────────────────────
+Parameters: 641,923
+Epoch   0/50 | Train: 0.813729 | Val: 1.163982 | Best: 1.163982 (ep 0) | LR: 9.99e-05
+Epoch  10/50 | Train: 0.452126 | Val: 1.312938 | Best: 1.145287 (ep 1) | LR: 8.86e-05
+Early stopping at epoch 16 (no improvement for 15 epochs)
+
+Training complete in 440.1s
+Best val loss: 1.145287 at epoch 1
+Restored model weights from best epoch (1)
+
+  Transformer Results:
+  MSE: 1.161409
+  RMSE: 1.077687
+  MAE: 0.531298
+  R²: 0.2430
+  Correlation: 0.4499
+  Loop area error: 1.4156
+  Max deviation: 2.3880
+
+============================================================
+COMPARISON SUMMARY
+============================================================
+Method                 MSE       RMSE        MAE       R²     Corr   AreaErr   MaxDev
+------------------------------------------------------------
+Kors              1.354477   1.163820   0.622021   0.0561   0.4479    0.9590   2.8490
+LSTM              1.206540   1.098426   0.558129   0.2123   0.3784    0.9383   2.8447
+Transformer       1.161409   1.077687   0.531298   0.2430   0.4499    1.4156   2.3880
+============================================================
+
+Models + normalization stats saved to ./checkpoints/

@@ -1,0 +1,14 @@
+# Dataset — large (~6GB), redistribute via PhysioNet/Kaggle, not git
+/data/
+
+# Generated visualizations — regenerate with visualize_example.py
+/viz/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+*.egg-info/
+
+# Claude Code local settings (machine-specific)
+.claude/

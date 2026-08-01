@@ -1,0 +1,20 @@
+[project]
+name = "vcg-project"
+version = "0.1.0"
+description = "ECG to VCG transformer with 3D vectorcardiogram visualization"
+requires-python = ">=3.11"
+dependencies = [
+    "marimo",
+    "numpy",
+    "scipy",
+    "wfdb",
+    "neurokit2",
+    "torch",
+    "plotly",
+    "scikit-learn",
+    "pandas",
+]
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.backends._legacy:_Backend"
