@@ -1,0 +1,81 @@
+/home/sabith10/.local/lib/python3.8/site-packages/torch/optim/lr_scheduler.py:232: UserWarning: The epoch parameter in `scheduler.step()` was not necessary and is being deprecated where possible. Please use `scheduler.step()` to step the scheduler. During the deprecation, if epoch is different from None, the closed form is used instead of the new chainable form, where available. Please open an issue if you are unable to replicate your use case: https://github.com/pytorch/pytorch/issues/new/choose.
+  warnings.warn(EPOCH_DEPRECATION_WARNING, UserWarning)
+Using device: cuda
+============================================================
+ECG → VCG Training
+============================================================
+
+Loading + preprocessing up to 549 records from ./data/ptb/PTB diagnostic ecg database csv files (beat length=raw/native, max 15 beats/record)...
+Extracted 8235 beats in 79.6s
+ECG shape: (8235, 12, 1000)
+VCG shape: (8235, 3, 1000)
+
+Train: 6600 beats | Val: 1635 beats
+Train patients: 435 | Val patients: 108
+
+────────────────────────────────────────────────────────────
+KORS REGRESSION BASELINE
+────────────────────────────────────────────────────────────
+  MSE: 1.354477
+  RMSE: 1.163820
+  MAE: 0.622021
+  R²: 0.0561
+  Correlation: 0.4479
+  Loop area error: 0.9590
+  Max deviation: 2.8490
+
+────────────────────────────────────────────────────────────
+TRAINING LSTM
+────────────────────────────────────────────────────────────
+Parameters: 661,635
+Epoch   0/50 | Train: 1.010397 | Val: 1.445706 | Best: 1.445706 (ep 0) | LR: 6.24e-06
+Epoch  10/50 | Train: 0.598315 | Val: 1.263606 | Best: 1.194461 (ep 6) | LR: 2.87e-05
+Epoch  20/50 | Train: 0.476929 | Val: 1.355773 | Best: 1.194461 (ep 6) | LR: 2.17e-05
+Early stopping at epoch 21 (no improvement for 15 epochs)
+
+Training complete in 198.9s
+Best val loss: 1.194461 at epoch 6
+Restored model weights from best epoch (6)
+
+  LSTM Results:
+  MSE: 1.211517
+  RMSE: 1.100689
+  MAE: 0.555807
+  R²: 0.2039
+  Correlation: 0.3975
+  Loop area error: 1.0877
+  Max deviation: 2.5909
+
+────────────────────────────────────────────────────────────
+TRAINING TRANSFORMER
+────────────────────────────────────────────────────────────
+Parameters: 641,923
+Epoch   0/50 | Train: 1.008043 | Val: 1.426578 | Best: 1.426578 (ep 0) | LR: 6.24e-06
+Epoch  10/50 | Train: 0.619278 | Val: 1.171141 | Best: 1.157339 (ep 6) | LR: 2.87e-05
+Epoch  20/50 | Train: 0.507056 | Val: 1.246389 | Best: 1.157339 (ep 6) | LR: 2.17e-05
+Early stopping at epoch 21 (no improvement for 15 epochs)
+
+Training complete in 566.8s
+Best val loss: 1.157339 at epoch 6
+Restored model weights from best epoch (6)
+
+  Transformer Results:
+  MSE: 1.173257
+  RMSE: 1.083170
+  MAE: 0.533391
+  R²: 0.2349
+  Correlation: 0.4317
+  Loop area error: 1.2588
+  Max deviation: 2.5823
+
+============================================================
+COMPARISON SUMMARY
+============================================================
+Method                 MSE       RMSE        MAE       R²     Corr   AreaErr   MaxDev
+------------------------------------------------------------
+Kors              1.354477   1.163820   0.622021   0.0561   0.4479    0.9590   2.8490
+LSTM              1.211517   1.100689   0.555807   0.2039   0.3975    1.0877   2.5909
+Transformer       1.173257   1.083170   0.533391   0.2349   0.4317    1.2588   2.5823
+============================================================
+
+Models + normalization stats saved to ./checkpoints/
