@@ -166,6 +166,42 @@ The `warmup_epochs` capability itself is kept (default off, so master's
 default behavior is unchanged) since it's a generically useful, cheap
 option even though this particular hyperparameter choice wasn't a win.
 
+## Experiment: Gaussian noise augmentation (branch `experiment/gaussian-noise-augmentation`)
+
+Discussion before running this: noise augmentation is a generic denoiser,
+not specifically targeted at the failure mode we actually suspect (the
+model latching onto patient-specific idiosyncrasies in individual leads
+instead of the shared, geometry-respecting lead→VCG relationship that
+`VCGLift`'s pseudo-inverse assumes). There was also a specific concern
+that noise-as-regularizer tends to shrink prediction variance toward the
+mean, and R² penalizes variance mismatch — so it could depress R² without
+the reconstruction actually being worse in a real sense. Tested anyway,
+as a deliberately separate lever from lead dropout (which more directly
+targets the memorization hypothesis, planned as a follow-up).
+
+Implementation: `noise_std` (default 0, opt-in) adds `N(0, noise_std)` to
+the ECG input during training batches only — never in validation or at
+eval time. Input is already z-scored to ~unit variance per channel at
+that point, so `noise_std` is directly interpretable as a fraction of a
+channel's own std.
+
+`python3 train.py --max-records 549 --epochs 50 --batch-size 64 --max-beats-per-record 15 --noise-std 0.1`
+Log: [`logs/06_gaussian_noise_std0.1.txt`](logs/06_gaussian_noise_std0.1.txt)
+
+| Method | MSE | R² | Corr | Best epoch |
+|---|---|---|---|---|
+| Kors | 1.354 | 0.056 | 0.448 | — |
+| LSTM | 1.207 | 0.212 | 0.378 | 0 (unchanged) |
+| Transformer | 1.162 | 0.243 | 0.450 | 1 (unchanged) |
+
+**Result: null.** Essentially identical to the no-augmentation baseline on
+every metric, and best-epoch didn't move either — noise_std=0.1 had no
+detectable effect on training dynamics in either direction. This is
+inconclusive rather than confirming "noise doesn't help": 0.1 may simply
+be too weak a perturbation (10% of an already-unit-variance channel) to
+matter. Next: either retest at a higher noise_std (e.g. 0.3-0.5) to get a
+real read, or move on to lead dropout as the more targeted hypothesis.
+
 ## Current state / open questions
 
 - Both models still overfit within 1–2 epochs. Two live hypotheses, not
