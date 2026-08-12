@@ -43,6 +43,11 @@ def main():
              "epochs before cosine decay starts. 0 (default) = no warmup.",
     )
     parser.add_argument(
+        "--noise-std", type=float, default=0.0,
+        help="Std of Gaussian noise added to the (already-normalized, ~unit "
+             "variance) ECG input during training only. 0 (default) = off.",
+    )
+    parser.add_argument(
         "--beat-length", type=int, default=None,
         help="If set, resample each beat to this many points. Default: "
              "keep the raw fixed-window beat at native sampling rate.",
@@ -129,6 +134,7 @@ def main():
         batch_size=args.batch_size,
         epochs=args.epochs,
         warmup_epochs=args.warmup_epochs,
+        noise_std=args.noise_std,
     )
 
     # ── Kors baseline ──────────────────────────────────────────────

@@ -22,6 +22,7 @@ class TrainConfig:
     epochs: int = 100
     patience: int = 15          # Early stopping patience
     warmup_epochs: int = 0      # Linear LR warmup before cosine decay (0 = off)
+    noise_std: float = 0.0      # Gaussian noise added to ECG input during training only (0 = off)
     device: str = "auto"        # "auto", "cuda", "cpu"
 
 
@@ -252,6 +253,16 @@ def train_model(
         for ecg_batch, vcg_batch in train_loader:
             ecg_batch = ecg_batch.to(device)
             vcg_batch = vcg_batch.to(device)
+
+            # Training-only input noise (simulates electrode/amplifier
+            # noise). ECG is already z-scored to ~unit variance per channel
+            # at this point, so noise_std is directly "fraction of a
+            # channel's own std" without extra per-channel scaling. Applied
+            # only here, never in the validation loop or at eval time, and
+            # the VCG target is left untouched — the model should learn to
+            # recover the same true VCG despite this input perturbation.
+            if config.noise_std > 0:
+                ecg_batch = ecg_batch + torch.randn_like(ecg_batch) * config.noise_std
 
             optimizer.zero_grad()
             vcg_pred = model(ecg_batch)
