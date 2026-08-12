@@ -227,6 +227,38 @@ memorization directly), or raising `max_beats_per_record` past 15 (every
 inspected record hit that cap exactly, meaning most of each ~38s
 recording — likely 2-4x more beats per patient — is currently unused).
 
+## Experiment: raise max_beats_per_record 15→30 (branch `experiment/max-beats-30`)
+
+Every inspected record hit the 15-beat cap exactly, meaning most of each
+~38s recording (typically 38-65 beats available at 60-100bpm) was going
+unused. Hypothesis: using more of it gives more effective training
+diversity. No code change — `max_beats_per_record` was already a CLI
+flag; this just changes its value.
+
+`python3 train.py --max-records 549 --epochs 50 --batch-size 64 --max-beats-per-record 30`
+— 16470 beats (up from 8235), 13200 train / 3270 val, same 435/108 patient split.
+Log: [`logs/08_max_beats_30.txt`](logs/08_max_beats_30.txt)
+
+| Method | MSE | R² | Corr | Best epoch |
+|---|---|---|---|---|
+| Kors | 1.308 | 0.079 | 0.466 | — |
+| LSTM | 1.214 | 0.193 | 0.400 | 0 (was 0) |
+| Transformer | 1.197 | 0.207 | 0.417 | 0 (was 1) |
+
+**Result: made things worse, not better.** Both models regressed (LSTM R²
+0.212→0.193, Transformer 0.243→0.207), and Transformer's best-epoch
+regressed too (1→0). This is a real, informative negative result: doubling
+beats/record doesn't add new information, it adds more *repetitions* of
+the same 435 patients' idiosyncrasies — densely-sampled beats from one
+recording are highly correlated with each other, so this likely
+reinforces per-patient memorization rather than counteracting it. It may
+also make batches noisier (more likely to contain multiple beats from the
+same patient, reducing the effective independent sample size per gradient
+step). Reverting to `max_beats_per_record=15` as the working default.
+This strengthens the case for lead dropout (targets memorization directly,
+independent of how much per-patient data exists) as the next experiment,
+or sourcing genuinely more patients.
+
 ## Current state / open questions
 
 - Both models still overfit within 1–2 epochs. Two live hypotheses, not
