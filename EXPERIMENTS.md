@@ -132,6 +132,40 @@ raw MSE tie-breaks, and its best epoch moved from 0 to 1 — a small but
 real sign that the extra per-patient temporal diversity is helping, not
 just noise.
 
+## Experiment: LR warmup (branch `experiment/lr-warmup`)
+
+Hypothesis: both models hitting best val loss at epoch 0 (Run 4) suggests
+the optimizer takes a full-size step from batch 1 and lands in a sharp,
+poorly-generalizing minimum — slowing convergence via warmup might find a
+better one. Added `warmup_epochs` to `TrainConfig` (linear ramp from 1% to
+100% of `--lr` before cosine decay, default 0/off — backward compatible).
+
+`python3 train.py --max-records 549 --epochs 50 --batch-size 64 --max-beats-per-record 15 --lr 3e-5 --warmup-epochs 5`
+Log: [`logs/05_lr_warmup_experiment.txt`](logs/05_lr_warmup_experiment.txt)
+
+| Method | MSE | R² | Corr | Best epoch |
+|---|---|---|---|---|
+| Kors | 1.354 | 0.056 | 0.448 | — |
+| LSTM | 1.212 | 0.204 | 0.398 | 6 (was 0) |
+| Transformer | 1.173 | 0.235 | 0.432 | 6 (was 0) |
+
+**Result: mechanically worked, didn't help.** Both models now train
+productively for 6 epochs instead of overfitting immediately at epoch
+0-1 — the warmup is doing what it's supposed to. But final R² is
+marginally *lower* than Run 4 (LSTM 0.212→0.204, Transformer
+0.243→0.235), not higher. If "converges too fast → sharp minimum" were
+the dominant problem, slowing convergence down should have found a
+better generalizing point, not just taken a slower path to a similar or
+slightly worse one. This is evidence *against* optimization dynamics
+being the main bottleneck, and *for* the data-diversity/patient-count
+hypothesis instead — makes data augmentation (adding realistic
+measurement noise to the ECG input, keeping true VCG target unchanged)
+the more promising next lever rather than further LR/schedule tuning.
+
+The `warmup_epochs` capability itself is kept (default off, so master's
+default behavior is unchanged) since it's a generically useful, cheap
+option even though this particular hyperparameter choice wasn't a win.
+
 ## Current state / open questions
 
 - Both models still overfit within 1–2 epochs. Two live hypotheses, not

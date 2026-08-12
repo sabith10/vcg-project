@@ -21,6 +21,7 @@ class TrainConfig:
     batch_size: int = 32
     epochs: int = 100
     patience: int = 15          # Early stopping patience
+    warmup_epochs: int = 0      # Linear LR warmup before cosine decay (0 = off)
     device: str = "auto"        # "auto", "cuda", "cpu"
 
 
@@ -199,9 +200,26 @@ def train_model(
         lr=config.lr,
         weight_decay=config.weight_decay,
     )
-    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
-        optimizer, T_max=config.epochs, eta_min=config.lr * 0.01
-    )
+    # Both models hit their best val loss at epoch 0-1 then overfit for the
+    # rest of training — a warmup ramps the LR up from near-zero instead of
+    # taking full-size steps from the first batch, which is one plausible
+    # way that early jump lands in a sharp, poorly-generalizing minimum.
+    if config.warmup_epochs > 0:
+        warmup = torch.optim.lr_scheduler.LinearLR(
+            optimizer, start_factor=0.01, end_factor=1.0,
+            total_iters=config.warmup_epochs,
+        )
+        cosine = torch.optim.lr_scheduler.CosineAnnealingLR(
+            optimizer, T_max=max(1, config.epochs - config.warmup_epochs),
+            eta_min=config.lr * 0.01,
+        )
+        scheduler = torch.optim.lr_scheduler.SequentialLR(
+            optimizer, schedulers=[warmup, cosine], milestones=[config.warmup_epochs],
+        )
+    else:
+        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
+            optimizer, T_max=config.epochs, eta_min=config.lr * 0.01
+        )
     criterion = nn.MSELoss()
 
     # Create dataloaders

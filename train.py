@@ -38,14 +38,20 @@ def main():
     parser.add_argument("--batch-size", type=int, default=32)
     parser.add_argument("--lr", type=float, default=1e-4)
     parser.add_argument(
+        "--warmup-epochs", type=int, default=0,
+        help="Linearly ramp LR from 1%% of --lr up to --lr over this many "
+             "epochs before cosine decay starts. 0 (default) = no warmup.",
+    )
+    parser.add_argument(
         "--beat-length", type=int, default=None,
         help="If set, resample each beat to this many points. Default: "
              "keep the raw fixed-window beat at native sampling rate.",
     )
     parser.add_argument(
         "--max-beats-per-record", type=int, default=3,
-        help="Keep only the first N beats per record (raw resolution, "
-             "fewer beats) rather than resampling every beat in the record.",
+        help="Keep only N beats per record, sampled uniformly at random "
+             "from the whole recording (raw resolution, fewer beats) "
+             "rather than resampling every beat in the record.",
     )
     parser.add_argument("--val-split", type=float, default=0.2)
     parser.add_argument("--seed", type=int, default=42)
@@ -122,6 +128,7 @@ def main():
         lr=args.lr,
         batch_size=args.batch_size,
         epochs=args.epochs,
+        warmup_epochs=args.warmup_epochs,
     )
 
     # ── Kors baseline ──────────────────────────────────────────────
