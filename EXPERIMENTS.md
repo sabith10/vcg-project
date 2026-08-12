@@ -199,8 +199,33 @@ every metric, and best-epoch didn't move either — noise_std=0.1 had no
 detectable effect on training dynamics in either direction. This is
 inconclusive rather than confirming "noise doesn't help": 0.1 may simply
 be too weak a perturbation (10% of an already-unit-variance channel) to
-matter. Next: either retest at a higher noise_std (e.g. 0.3-0.5) to get a
-real read, or move on to lead dropout as the more targeted hypothesis.
+matter. Next: retest at a higher noise_std to get a real read.
+
+### Retest at noise_std=0.3
+
+Log: [`logs/07_gaussian_noise_std0.3.txt`](logs/07_gaussian_noise_std0.3.txt)
+
+| Method | MSE | R² | Corr | Best epoch |
+|---|---|---|---|---|
+| Kors | 1.354 | 0.056 | 0.448 | — |
+| LSTM | 1.211 | 0.209 | 0.373 | 0 (unchanged) |
+| Transformer | 1.164 | 0.242 | 0.446 | 1 (unchanged) |
+
+**Result: still null, now conclusively.** At 3x the noise magnitude,
+nothing moved — not the metrics (LSTM R² 0.212→0.209, Transformer
+essentially flat at 0.242 vs 0.243), and not even best-epoch, which is
+the more telling signal: if noise were meaningfully perturbing the
+optimization landscape at all, you'd expect *some* change in when
+training peaks, not just in the final numbers. Across a 3x range with no
+effect in either direction, this is a real negative result, not an
+underpowered one. Conclusion: additive Gaussian noise on the ECG input is
+not the lever that improves generalization here — consistent with the
+concern raised before running it (generic denoiser, not targeted at
+either the suspected failure mode of per-lead memorization or the
+patient-diversity ceiling). Next candidates: lead dropout (targets
+memorization directly), or raising `max_beats_per_record` past 15 (every
+inspected record hit that cap exactly, meaning most of each ~38s
+recording — likely 2-4x more beats per patient — is currently unused).
 
 ## Current state / open questions
 
